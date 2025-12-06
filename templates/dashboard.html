@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Social Scheduler</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">Social Scheduler</span>
+            <span class="navbar-text text-white">
+                Welcome, {{ user.name }} | <a href="{{ url_for('logout') }}" class="text-white fw-bold">Logout</a>
+            </span>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <!-- Schedule Form -->
+            <div class="col-md-5">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">New Post</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('schedule') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Select Page</label>
+                                <select name="page_id" class="form-select" required onchange="updatePageName(this)">
+                                    <option value="">-- Choose a Page --</option>
+                                    {% for page in pages %}
+                                    <option value="{{ page.id }}" data-name="{{ page.name }}">{{ page.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="hidden" name="page_name" id="page_name_input">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Message</label>
+                                <textarea name="message" class="form-control" rows="4" required placeholder="What's on your mind?"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Image URL (Optional)</label>
+                                <input type="url" name="image_url" class="form-control" placeholder="https://example.com/image.jpg">
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" name="date" class="form-control" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Time</label>
+                                    <input type="time" name="time" class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100">Schedule Post</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue List -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Scheduled Queue</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Page</th>
+                                    <th>Message</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for post in posts %}
+                                <tr>
+                                    <td>{{ post.page_name }}</td>
+                                    <td>{{ post.message[:30] }}...</td>
+                                    <td>{{ post.scheduled_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if post.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif post.status == 'published' %}
+                                            <span class="badge bg-success">Published</span>
+                                        {% else %}
+                                            <span class="badge bg-danger" title="{{ post.error_msg }}">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3 text-muted">No posts scheduled yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updatePageName(select) {
+            var selectedOption = select.options[select.selectedIndex];
+            document.getElementById('page_name_input').value = selectedOption.getAttribute('data-name');
+        }
+        
+        // Set min date to today
+        document.querySelector('input[type="date"]').min = new Date().toISOString().split("T")[0];
+    </script>
+</body>
+</html>
